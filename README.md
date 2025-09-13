@@ -250,6 +250,7 @@ plt.show()
 
 # Let's also have a look at the maximum number of bound molecules
 plt.plot(max_bound_molecules, color="orange")
+plt.title("Max Number of Bound Molecules")
 plt.show()
 ```
 
@@ -284,3 +285,63 @@ plt.show()
 
 
 We see the oscillating behaviour at the beginning. First there are no bound molecules so $f_{bound}$ is high (0.8). In the next step the affinity is starkly decreased due to the high number of bound molecules. This is an issue in our model but does not affect the qualitative result. We can smooth this behaviour out a bit in a further iteration of the model.
+
+
+```python
+# Define parameters
+n_cells = 100
+n_steps = 1_000
+n_molecules = 100_000
+K = 4
+
+def frac_bound(n_bound):
+    # Reform K to a fractional entity - now also depending on loading
+    k = K * np.exp(-n_bound / 30_000)
+    frac_bound = k / (1 + k)
+    return frac_bound
+
+# Initial state (zero everywhere)
+stationary_phase = np.zeros(n_cells)
+mobile_phase = np.zeros(n_cells + n_steps)
+max_bound_molecules = np.zeros(n_steps + 1)
+
+# Loading of mobile phase in cell just before the stationary phase
+mobile_phase[n_cells] = n_molecules
+
+for step in range(1, n_steps + 1):
+    # Equilibration
+    max_bound_molecules[step] = np.max(stationary_phase)
+    for cell in range(n_cells):
+        n_bound_old = stationary_phase[cell]
+        n_tot = n_bound_old + mobile_phase[cell + step]
+        # Average fraction of bound molecules with previous step
+        n_frac_old = frac_bound(n_bound_old)
+        n_bound_new = np.floor(n_tot * n_frac_old)
+        n_frac_new = frac_bound(n_bound_new)
+        n_bound = (n_bound_old + n_bound_new) / 2
+        n_free = n_tot - n_bound
+        stationary_phase[cell] = n_bound
+        mobile_phase[cell + step] = n_free
+
+plt.plot(mobile_phase)
+plt.xlim(0, n_steps)
+plt.show()
+
+# Let's also have a look at the maximum number of bound molecules
+plt.plot(max_bound_molecules, color="orange")
+plt.title("Max Number of Bound Molecules")
+plt.xlim(0, 100)
+plt.show()
+```
+
+
+    
+![png](README_files/README_18_0.png)
+    
+
+
+
+    
+![png](README_files/README_18_1.png)
+    
+
