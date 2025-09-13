@@ -41,7 +41,7 @@ import matplotlib.pyplot as plt
 ```python
 # Define parameters
 n_cells = 100
-n_steps = 1000
+n_steps = 1_000
 n_molecules = 100_000
 K = 4
 
@@ -108,7 +108,7 @@ As all compounds are independent of each other, we can simply simulate each comp
 ```python
 # Define parameters
 n_cells = 100
-n_steps = 1100
+n_steps = 1_100
 n_molecules = [100_000, 100_000, 100_000]
 K = [2, 4, 7]
 
@@ -205,3 +205,82 @@ plt.show()
 
 - The lower the affinity to the stationary phase, the earlier the compound elutes.
 - There is a lower bound to the retention time, which is given by the number of cells in the column - 'dead volume'.
+
+## Decreasing Binding Affinity with Increasing Bound Molecules
+
+Let's suppose that the binding affinity of the stationary phase decreases with increasing number of bound molecules.
+Instead of using a 'hard stop' we will use a model where $K$ decreases exponentially with 
+
+
+```python
+# Define parameters
+n_cells = 100
+n_steps = 1_000
+n_molecules = 100_000
+K = 4
+
+def frac_bound(n_bound):
+    # Reform K to a fractional entity - now also depending on loading
+    k = K * np.exp(-n_bound / 30_000)
+    frac_bound = k / (1 + k)
+    return frac_bound
+
+# Initial state (zero everywhere)
+stationary_phase = np.zeros(n_cells)
+mobile_phase = np.zeros(n_cells + n_steps)
+max_bound_molecules = np.zeros(n_steps + 1)
+
+# Loading of mobile phase in cell just before the stationary phase
+mobile_phase[n_cells] = n_molecules
+
+for step in range(1, n_steps + 1):
+    # Equilibration
+    max_bound_molecules[step] = np.max(stationary_phase)
+    for cell in range(n_cells):
+        n_bound_old = stationary_phase[cell]
+        n_tot = n_bound_old + mobile_phase[cell + step]
+        n_bound = np.floor(n_tot * frac_bound(n_bound_old))
+        n_free = n_tot - n_bound
+        stationary_phase[cell] = n_bound
+        mobile_phase[cell + step] = n_free
+
+plt.plot(mobile_phase)
+plt.xlim(0, n_steps)
+plt.show()
+
+# Let's also have a look at the maximum number of bound molecules
+plt.plot(max_bound_molecules, color="orange")
+plt.show()
+```
+
+
+    
+![png](README_files/README_14_0.png)
+    
+
+
+
+    
+![png](README_files/README_14_1.png)
+    
+
+
+### Observations
+
+- Decreasing binding affinity leads to a tailing peak.
+- Due to the way the simulation is run the initial loading of the column is very, very high. Let's look at that in some more detail.
+
+
+```python
+plt.plot(max_bound_molecules, color="orange")
+plt.xlim(0, 100)
+plt.show()
+```
+
+
+    
+![png](README_files/README_16_0.png)
+    
+
+
+We see the oscillating behaviour at the beginning. First there are no bound molecules so $f_{bound}$ is high (0.8). In the next step the affinity is starkly decreased due to the high number of bound molecules. This is an issue in our model but does not affect the qualitative result. We can smooth this behaviour out a bit in a further iteration of the model.
