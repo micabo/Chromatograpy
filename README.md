@@ -1,7 +1,7 @@
 # Chromatograpy
 
-In this repository we will explore simple simulations of chromatographic processes.
-In this notebook we will start particularly simple and simulate the chromatographic process with the cell model.
+In this repository we will explore educational simulations of chromatographic processes.
+We will start particularly simple and simulate the chromatographic process with the cell model.
 By the way, the repository name is not a typo. Rather, it is a blend of the term "chromatography" and the fact that the code is written in Python (in .py files).
 
 ## Cell Model
@@ -32,6 +32,7 @@ The number of free molecules is then simply $n_{free} = n_{total} - n_{bound}$.
 
 
 ```python
+%matplotlib inline
 import numpy as np
 import matplotlib.pyplot as plt
 ```
@@ -67,12 +68,18 @@ for step in range(1, n_steps + 1):
 
 plt.plot(mobile_phase)
 plt.xlim(0, n_steps)
-plt.show()
 ```
 
 
+
+
+    (0.0, 1000.0)
+
+
+
+
     
-![png](README_files/README_4_0.png)
+![png](README_files/README_4_1.png)
     
 
 
@@ -87,12 +94,18 @@ plt.plot(mobile_phase, label="Simulation")
 plt.plot(x, y, '--', label="Gaussian")
 plt.xlim(0, n_steps)
 plt.legend()
-plt.show()
 ```
 
 
+
+
+    <matplotlib.legend.Legend at 0x111d3f8c0>
+
+
+
+
     
-![png](README_files/README_5_0.png)
+![png](README_files/README_5_1.png)
     
 
 
@@ -138,12 +151,18 @@ for mp in mobile_phase:
     plt.plot(mp)
 plt.xlim(0, n_steps)
 plt.legend([f'K={k}' for k in K])
-plt.show()
 ```
 
 
+
+
+    <matplotlib.legend.Legend at 0x1120e42d0>
+
+
+
+
     
-![png](README_files/README_8_0.png)
+![png](README_files/README_8_1.png)
     
 
 
@@ -189,16 +208,22 @@ for step in range(1, n_steps + 1):
 
 for mp in mobile_phase:
     plt.plot(mp)
-plt.vlines([100], 0, 1e4, colors="red", linestyles="dashed")
-plt.xlim(0, n_steps)
+plt.vlines([99], 0, 1e4, colors="red", linestyles="dashed")
+plt.xlim(90, n_steps)
 plt.ylim(-5, 1e4)
 plt.legend([f'K={k}' for k in K])
-plt.show()
 ```
 
 
+
+
+    <matplotlib.legend.Legend at 0x11216cf50>
+
+
+
+
     
-![png](README_files/README_11_0.png)
+![png](README_files/README_11_1.png)
     
 
 
@@ -230,6 +255,7 @@ def frac_bound(n_bound):
 stationary_phase = np.zeros(n_cells)
 mobile_phase = np.zeros(n_cells + n_steps)
 max_bound_molecules = np.zeros(n_steps + 1)
+sum_bound_molecules = np.zeros(n_steps + 1)
 
 # Loading of mobile phase in cell just before the stationary phase
 mobile_phase[n_cells] = n_molecules
@@ -237,6 +263,7 @@ mobile_phase[n_cells] = n_molecules
 for step in range(1, n_steps + 1):
     # Equilibration
     max_bound_molecules[step] = np.max(stationary_phase)
+    sum_bound_molecules[step] = np.sum(stationary_phase)
     for cell in range(n_cells):
         n_bound_old = stationary_phase[cell]
         n_tot = n_bound_old + mobile_phase[cell + step]
@@ -251,8 +278,9 @@ plt.show()
 
 # Let's also have a look at the maximum number of bound molecules
 plt.plot(max_bound_molecules, color="orange")
-plt.title("Max Number of Bound Molecules")
-plt.show()
+plt.plot(sum_bound_molecules, color="green", linestyle="dashed")
+plt.title("Number of Bound Molecules")
+plt.legend(["max n_bound", "sum n_bound"])
 ```
 
 
@@ -262,8 +290,15 @@ plt.show()
 
 
 
+
+
+    <matplotlib.legend.Legend at 0x112262210>
+
+
+
+
     
-![png](README_files/README_14_1.png)
+![png](README_files/README_14_2.png)
     
 
 
@@ -275,13 +310,21 @@ plt.show()
 
 ```python
 plt.plot(max_bound_molecules, color="orange")
+plt.plot(sum_bound_molecules, color="green", linestyle="dashed")
 plt.xlim(0, 100)
-plt.show()
+plt.legend(["max n_bound", "sum n_bound"])
 ```
 
 
+
+
+    <matplotlib.legend.Legend at 0x112295d10>
+
+
+
+
     
-![png](README_files/README_16_0.png)
+![png](README_files/README_16_1.png)
     
 
 
@@ -332,7 +375,6 @@ plt.show()
 plt.plot(max_bound_molecules, color="orange")
 plt.title("Max Number of Bound Molecules")
 plt.xlim(0, 100)
-plt.show()
 ```
 
 
@@ -342,7 +384,14 @@ plt.show()
 
 
 
+
+
+    (0.0, 100.0)
+
+
+
+
     
-![png](README_files/README_18_1.png)
+![png](README_files/README_18_2.png)
     
 
