@@ -1,7 +1,8 @@
-# Chromatography
+# Chromatograpy
 
 In this repository we will explore simple simulations of chromatographic processes.
 In this notebook we will start particularly simple and simulate the chromatographic process with the cell model.
+By the way, the repository name is not a typo. Rather, it is a blend of the term "chromatography" and the fact that the code is written in Python (in .py files).
 
 ## Cell Model
 
