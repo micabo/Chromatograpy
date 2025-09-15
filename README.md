@@ -2,7 +2,7 @@
 
 In this repository we will explore educational simulations of chromatographic processes.
 We will start particularly simple and simulate the chromatographic process with the cell model.
-By the way, the repository name is not a typo. Rather, it is a blend of the term "chromatography" and the fact that the code is written in Python (in .py files).
+By the way, the repository name is not a typo - "chromatography" + "Python".
 
 ## Cell Model
 
@@ -99,7 +99,7 @@ plt.legend()
 
 
 
-    <matplotlib.legend.Legend at 0x111d3f8c0>
+    <matplotlib.legend.Legend at 0x1257138c0>
 
 
 
@@ -156,7 +156,7 @@ plt.legend([f'K={k}' for k in K])
 
 
 
-    <matplotlib.legend.Legend at 0x1120e42d0>
+    <matplotlib.legend.Legend at 0x126bd8190>
 
 
 
@@ -217,7 +217,7 @@ plt.legend([f'K={k}' for k in K])
 
 
 
-    <matplotlib.legend.Legend at 0x11216cf50>
+    <matplotlib.legend.Legend at 0x126c5ce10>
 
 
 
@@ -230,12 +230,13 @@ plt.legend([f'K={k}' for k in K])
 #### Observations
 
 - The lower the affinity to the stationary phase, the earlier the compound elutes.
+- Note that the peak height do not increase because we use fewer molecules for the low-affinity compounds.
 - There is a lower bound to the retention time, which is given by the number of cells in the column - 'dead volume'.
 
 ## Decreasing Binding Affinity with Increasing Bound Molecules
 
 Let's suppose that the binding affinity of the stationary phase decreases with increasing number of bound molecules.
-Instead of using a 'hard stop' we will use a model where $K$ decreases exponentially with 
+Instead of using a 'hard stop' we will use a model where $K$ decreases exponentially with 'occupation'. 
 
 
 ```python
@@ -247,8 +248,7 @@ K = 4
 
 def frac_bound(n_bound):
     # Reform K to a fractional entity - now also depending on loading
-    k = K * np.exp(-n_bound / 30_000)
-    frac_bound = k / (1 + k)
+    frac_bound = K / (np.exp(n_bound/30_000) + K)
     return frac_bound
 
 # Initial state (zero everywhere)
@@ -261,9 +261,10 @@ sum_bound_molecules = np.zeros(n_steps + 1)
 mobile_phase[n_cells] = n_molecules
 
 for step in range(1, n_steps + 1):
-    # Equilibration
+    # Record some information about the column
     max_bound_molecules[step] = np.max(stationary_phase)
     sum_bound_molecules[step] = np.sum(stationary_phase)
+    # Equilibration
     for cell in range(n_cells):
         n_bound_old = stationary_phase[cell]
         n_tot = n_bound_old + mobile_phase[cell + step]
@@ -292,7 +293,7 @@ plt.legend(["max n_bound", "sum n_bound"])
 
 
 
-    <matplotlib.legend.Legend at 0x112262210>
+    <matplotlib.legend.Legend at 0x126d4e0d0>
 
 
 
@@ -318,7 +319,7 @@ plt.legend(["max n_bound", "sum n_bound"])
 
 
 
-    <matplotlib.legend.Legend at 0x112295d10>
+    <matplotlib.legend.Legend at 0x126d81d10>
 
 
 
@@ -340,29 +341,31 @@ K = 4
 
 def frac_bound(n_bound):
     # Reform K to a fractional entity - now also depending on loading
-    k = K * np.exp(-n_bound / 30_000)
-    frac_bound = k / (1 + k)
+    frac_bound = K / (np.exp(n_bound/30_000) + K)
     return frac_bound
 
 # Initial state (zero everywhere)
 stationary_phase = np.zeros(n_cells)
 mobile_phase = np.zeros(n_cells + n_steps)
 max_bound_molecules = np.zeros(n_steps + 1)
+sum_bound_molecules = np.zeros(n_steps + 1)
 
 # Loading of mobile phase in cell just before the stationary phase
 mobile_phase[n_cells] = n_molecules
 
 for step in range(1, n_steps + 1):
-    # Equilibration
+    # Record some information about the column
     max_bound_molecules[step] = np.max(stationary_phase)
+    sum_bound_molecules[step] = np.sum(stationary_phase)
+    # Equilibration
     for cell in range(n_cells):
-        n_bound_old = stationary_phase[cell]
-        n_tot = n_bound_old + mobile_phase[cell + step]
-        # Average fraction of bound molecules with previous step
-        n_frac_old = frac_bound(n_bound_old)
-        n_bound_new = np.floor(n_tot * n_frac_old)
-        n_frac_new = frac_bound(n_bound_new)
-        n_bound = (n_bound_old + n_bound_new) / 2
+        n_bound = stationary_phase[cell]
+        n_tot = n_bound + mobile_phase[cell + step]
+        n_bound_new = np.floor(n_tot * frac_bound(n_bound))
+        # Interate on n_bound until consistent (give us some leeway +/- 1 molecule)
+        while abs(n_bound_new - n_bound) > 1:
+            n_bound = (n_bound_new + n_bound) / 2 # introduces some damping
+            n_bound_new = np.floor(n_tot * frac_bound(n_bound))
         n_free = n_tot - n_bound
         stationary_phase[cell] = n_bound
         mobile_phase[cell + step] = n_free
@@ -373,7 +376,9 @@ plt.show()
 
 # Let's also have a look at the maximum number of bound molecules
 plt.plot(max_bound_molecules, color="orange")
-plt.title("Max Number of Bound Molecules")
+plt.plot(sum_bound_molecules, color="green", linestyle="dashed")
+plt.legend(["max n_bound", "sum n_bound"])
+plt.title("Number of Bound Molecules")
 plt.xlim(0, 100)
 ```
 

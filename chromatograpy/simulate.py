@@ -24,5 +24,9 @@ def simulate_column_1(n_cells: int, n_steps: int, n_molecules: int, K: float):
     return mobile_phase
 
 
-def fraction_bound(K: float, bound: int, capacity: None) -> float:
-    return K / (1 + K)
+def fraction_bound(K, bound=0, capacity=None):
+    if capacity is None:
+        capacity_term = 1
+    else:
+        capacity_term = np.exp(bound / capacity)
+    return K / (capacity_term + K)
